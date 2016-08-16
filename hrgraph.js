@@ -43,6 +43,12 @@ function parseFile(fn, cb) {
 				if (err) return cb(err);
 				parseTcx(doc, cb);
 			});
+		} else if (/^\{/.test(contents)) {
+			let doc = JSON.parse(contents);
+			if (!doc) {
+				return cb(new Error('Failed to parse JSON file ' + fn));
+			}
+			cb(null, doc.datapoints);
 		} else {
 			cb(new Error('Unknown file format of ' + fn));
 		}
@@ -50,7 +56,15 @@ function parseFile(fn, cb) {
 }
 
 function help() {
-	console.log('Usage: hrgraph.js FILES..');
+	console.log('Usage: hrgraph.js [OPTIONS] FILES..');
+	console.log('  --cache FILE_JSON  Write json cache file of all timestamps')
+}
+
+function split_days(datapoints) {
+	var days_dict = {};
+	for (var dp of datapoints) {
+
+	}
 }
 
 function main() {
@@ -66,6 +80,13 @@ function main() {
 		datapoints.sort(function(dp1, dp2) {
 			return dp1.timestamp - dp2.timestamp;
 		});
+
+		if (argv.cache) {
+			var datapoints_json = JSON.stringify({
+				'datapoints': datapoints,
+			});
+			fs.writeFileSync(argv.cache, datapoints_json);
+		}
 
 		console.log(datapoints);
 
