@@ -1,6 +1,6 @@
 {
     "rules": {
-        "indent": 0,
+        "indent": ["error", "tab"],
         "no-console": 0,
         "quotes": [
             2,
@@ -24,5 +24,8 @@
     },
     "globals": {
     },
-    "extends": "eslint:recommended"
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 7
+    }
 }

@@ -11,12 +11,14 @@
 		"test:watch": "npm run test -- -w"
 	},
 	"dependencies": {
-		"d3": "*"
+		"d3": "*",
+		"async": "*",
+		"xmldom": "*"
 	},
 	"devDependencies": {
 		"eslint": "*",
 		"jshint": "*",
-		"mocha": "*",
+		"mocha": "*"
 	},
 	"private": true
 }
