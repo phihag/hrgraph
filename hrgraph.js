@@ -105,10 +105,10 @@ function plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr) {
 	const inner_height = height - margin.top - margin.bottom;
 
 	svg.attr('width', width);
-    svg.attr('height', height);
+	svg.attr('height', height);
 
 	var x = d3.scale.linear()
-	    .range([0, inner_width]);
+		.range([0, inner_width]);
 	var y = d3.scale.linear()
 		.range([inner_height, 0]);
     
