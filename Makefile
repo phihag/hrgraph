@@ -1,10 +1,12 @@
-test:
-	npm test
+lint: eslint
 
-lint:
+eslint:
 	eslint .
 
 deps:
 	npm install
 
-.PHONY: deps test lint
+clean:
+	rm -rf node_modules
+
+.PHONY: deps eslint lint clean

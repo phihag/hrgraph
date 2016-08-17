@@ -6,10 +6,6 @@
 		"type": "git",
 		"url": "git://github.com/phihag/hrgraph.git"
 	},
-	"scripts": {
-		"test": "mocha test/",
-		"test:watch": "npm run test -- -w"
-	},
 	"dependencies": {
 		"async": "*",
 		"d3": "3",
@@ -17,9 +13,6 @@
 		"xmldom": "*"
 	},
 	"devDependencies": {
-		"eslint": "*",
-		"jshint": "*",
-		"mocha": "*"
-	},
-	"private": true
+		"eslint": "*"
+	}
 }
