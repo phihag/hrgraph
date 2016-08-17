@@ -72,6 +72,7 @@ function help() {
 	console.log('  --output FILE.html  Write HTML file');
 	console.log('  --cache FILE.json   Write json cache file of all timestamps');
 	console.log('  --title TITLE       Document title');
+	console.log('  --smooth SECONDS    Only record values every x seconds');
 }
 
 function splitDays(datapoints) {
@@ -161,6 +162,19 @@ function plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr) {
 		.attr('d', line);
 }
 
+function smooth(datapoints, secs) {
+	var prev = datapoints[0];
+	var res = [datapoints[0]];
+
+	for (var dp of datapoints) {
+		if ((prev.timestamp + (secs * 1000) < dp.timestamp) || (Math.abs(dp.hr - prev.hr) > 5)) {
+			prev = dp;
+			res.push(dp);
+		}
+	}
+	return res;
+}
+
 function main() {
 	var argv = require('minimist')(process.argv.slice(2));
 	if (argv.help || !argv._.length) {
@@ -174,6 +188,10 @@ function main() {
 		datapoints.sort(function(dp1, dp2) {
 			return dp1.timestamp - dp2.timestamp;
 		});
+		if (argv.smooth) {
+			datapoints = smooth(datapoints, parseInt(argv.smooth, 10));
+		}
+
 		for (let dp of datapoints) {
 			let dp_date = new Date(dp.timestamp);
 			dp.daysecond = dp_date.getHours() * 3600 + dp_date.getMinutes() * 60 + dp_date.getSeconds();
