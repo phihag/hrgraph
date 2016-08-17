@@ -112,17 +112,17 @@ function plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr) {
 		.range([0, inner_width]);
 	var y = d3.scale.linear()
 		.range([inner_height, 0]);
-    
-	var hourSecs = d3.range(
-		Math.ceil(min_daysecond / 3600) * 3600,
-		Math.floor(max_daysecond / 3600) * 3600,
-		3600);	
+
+	var tickValues = d3.range(
+		Math.ceil(min_daysecond / 1800) * 1800,
+		Math.floor(max_daysecond / 1800) * 1800,
+		1800);
 	var xAxis = d3.svg.axis()
 		.scale(x)
-		.tickValues(hourSecs)
+		.tickValues(tickValues)
 		.innerTickSize(-inner_height)
 		.outerTickSize(0)
-		.tickFormat(secs => pad(2, '0', Math.floor(secs / 3600)) + ':' + pad(2, '0', Math.floor((secs % 3600) / 60)))
+		.tickFormat(secs => (secs % 3600 !== 0) ? '' : pad(2, '0', Math.floor(secs / 3600)) + ':' + pad(2, '0', Math.floor((secs % 3600) / 60)))
 		.orient('bottom');
 
 	var yAxis = d3.svg.axis()
