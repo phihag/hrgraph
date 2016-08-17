@@ -11,8 +11,9 @@
 		"test:watch": "npm run test -- -w"
 	},
 	"dependencies": {
-		"d3": "*",
 		"async": "*",
+		"d3": "3",
+		"jsdom": "*",
 		"xmldom": "*"
 	},
 	"devDependencies": {

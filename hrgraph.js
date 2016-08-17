@@ -2,8 +2,20 @@
 'use strict';
 
 var async = require('async');
+var d3 = require('d3');
+var jsdom = require('jsdom');
 var fs = require('fs');
 var xmldom = require('xmldom');
+
+const DAY_NAMES = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
+function pad(n, c, v) {
+	var s = '' + v;
+	while (s.length < n) {
+		s = c + s;
+	}
+	return s;
+}
 
 function parseXML(contents, cb) {
 	var parser = new xmldom.DOMParser();
@@ -57,14 +69,80 @@ function parseFile(fn, cb) {
 
 function help() {
 	console.log('Usage: hrgraph.js [OPTIONS] FILES..');
-	console.log('  --cache FILE_JSON  Write json cache file of all timestamps')
+	console.log('  --output FILE.html  Write HTML file');
+	console.log('  --cache FILE.json   Write json cache file of all timestamps');
 }
 
-function split_days(datapoints) {
-	var days_dict = {};
+function splitDays(datapoints) {
+	var res = [];
+	var data_by_day = {};
 	for (var dp of datapoints) {
+		var date = new Date(dp.timestamp);
+		var day = date.getFullYear() + '-' + pad(2, '0', date.getMonth() + 1) + '-' + pad(2, '0', date.getDate());
 
+		var d = data_by_day[day];
+		if (! d) {
+			d = [];
+			data_by_day[day] = d;
+			res.push({
+				date: date,
+				data: d,
+			});
+		}
+
+		d.push(dp);
 	}
+
+	return res;
+}
+
+function plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr) {
+	const width = 1000;
+	const height = 150;
+
+	svg.attr('width', width);
+    svg.attr('height', height);
+
+	var x = d3.scale.linear()
+	    .range([0, width]);
+	var y = d3.scale.linear()
+		.range([height, 0]);
+    
+	var xAxis = d3.svg.axis()
+		.scale(x)
+		.orient('bottom');
+
+	var yAxis = d3.svg.axis()
+		.scale(y)
+		.orient('left');
+
+	var line = d3.svg.line()
+		.x(dp => x(dp.daysecond))
+		.y(dp => y(dp.hr));
+
+	x.domain([min_daysecond, max_daysecond]);
+	y.domain([min_hr, max_hr]);
+
+	var g = svg.append('g');
+	g.append('path')
+		.datum(day.data)
+		.attr('class', 'line')
+		.attr('d', line);
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Price ($)");
 }
 
 function main() {
@@ -80,6 +158,14 @@ function main() {
 		datapoints.sort(function(dp1, dp2) {
 			return dp1.timestamp - dp2.timestamp;
 		});
+		for (let dp of datapoints) {
+			let dp_date = new Date(dp.timestamp);
+			dp.daysecond = dp_date.getHours() * 3600 + dp_date.getMinutes() * 60 + dp_date.getSeconds();
+		}
+		var min_daysecond = d3.min(datapoints, dp => dp.daysecond);
+		var max_daysecond = d3.max(datapoints, dp => dp.daysecond);
+		var min_hr = d3.min(datapoints, dp => dp.hr);
+		var max_hr = d3.max(datapoints, dp => dp.hr);
 
 		if (argv.cache) {
 			var datapoints_json = JSON.stringify({
@@ -88,14 +174,42 @@ function main() {
 			fs.writeFileSync(argv.cache, datapoints_json);
 		}
 
-		console.log(datapoints);
+		var days = splitDays(datapoints);
 
-		// TODO split by days
 
-		// TODO set up plot
-		// TODO plot each
+		var doc = jsdom.jsdom(`<!DOCTYPE html><html><head><style>
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
 
-		// TODO write output file
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1px;
+}
+</style>
+</head><body></body></html>`);
+		var body = d3.select(doc).select('body');
+
+		for (let day of days) {
+			let date = day.date;
+			let day_str = DAY_NAMES[date.getDay()] + ' ' + date.getFullYear() + '-' + pad(2, '0', date.getMonth() + 1) + '-' + pad(2, '0', date.getDate());
+
+			body.append('h2').text(day_str);
+			let svg = body.append('svg');
+
+			plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr);
+		}
+
+		var html = doc.documentElement.outerHTML;
+		if (argv.output) {
+			fs.writeFileSync(argv.output, html);
+		} else {
+			console.log(html);
+		}
 	});
 }
 
