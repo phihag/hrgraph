@@ -71,6 +71,7 @@ function help() {
 	console.log('Usage: hrgraph.js [OPTIONS] FILES..');
 	console.log('  --output FILE.html  Write HTML file');
 	console.log('  --cache FILE.json   Write json cache file of all timestamps');
+	console.log('  --title TITLE       Document title');
 }
 
 function splitDays(datapoints) {
@@ -105,7 +106,6 @@ function plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr) {
 
 	svg.attr('width', width);
     svg.attr('height', height);
-
 
 	var x = d3.scale.linear()
 	    .range([0, inner_width]);
@@ -193,7 +193,10 @@ function main() {
 		var days = splitDays(datapoints);
 
 
-		var doc = jsdom.jsdom(`<!DOCTYPE html><html><head><style>
+		var doc = jsdom.jsdom(`<!DOCTYPE html><html><head>
+<meta charset="utf-8" />
+<title></title>
+<style>
 .axis path,
 .axis line {
   fill: none;
@@ -209,10 +212,13 @@ function main() {
 .line {
   fill: none;
   stroke: steelblue;
-  stroke-width: 1px;
+  stroke-width: 0.8px;
 }
 </style>
 </head><body></body></html>`);
+		if (argv.title) {
+			d3.select(doc).select('title').text(argv.title);
+		}
 		var body = d3.select(doc).select('body');
 
 		for (let day of days) {
