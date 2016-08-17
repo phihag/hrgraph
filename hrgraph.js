@@ -97,23 +97,37 @@ function splitDays(datapoints) {
 }
 
 function plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr) {
-	const width = 1000;
-	const height = 150;
+	const margin = {top: 10, right: 10, bottom: 20, left: 50};
+	const width = 1200;
+	const height = 250;
+	const inner_width = width - margin.left - margin.right;
+	const inner_height = height - margin.top - margin.bottom;
 
 	svg.attr('width', width);
     svg.attr('height', height);
 
+
 	var x = d3.scale.linear()
-	    .range([0, width]);
+	    .range([0, inner_width]);
 	var y = d3.scale.linear()
-		.range([height, 0]);
+		.range([inner_height, 0]);
     
+	var hourSecs = d3.range(
+		Math.ceil(min_daysecond / 3600) * 3600,
+		Math.floor(max_daysecond / 3600) * 3600,
+		3600);	
 	var xAxis = d3.svg.axis()
 		.scale(x)
+		.tickValues(hourSecs)
+		.innerTickSize(-inner_height)
+		.outerTickSize(0)
+		.tickFormat(secs => pad(2, '0', Math.floor(secs / 3600)) + ':' + pad(2, '0', Math.floor((secs % 3600) / 60)))
 		.orient('bottom');
 
 	var yAxis = d3.svg.axis()
 		.scale(y)
+		.innerTickSize(-inner_width)
+		.outerTickSize(0)
 		.orient('left');
 
 	var line = d3.svg.line()
@@ -123,26 +137,28 @@ function plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr) {
 	x.domain([min_daysecond, max_daysecond]);
 	y.domain([min_hr, max_hr]);
 
-	var g = svg.append('g');
-	g.append('path')
+	var root = svg.append('g')
+		.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+	root.append('g')
+		.attr('class', 'x axis')
+		.attr('transform', 'translate(0,' + inner_height + ')')
+		.call(xAxis);
+
+	root.append('g')
+		.attr('class', 'y axis')
+		.call(yAxis)
+		.append('text')
+		.attr('transform', 'rotate(-90)')
+		.attr('y', 6)
+		.attr('dy', '.71em')
+		.style('text-anchor', 'end')
+		.text('Puls');
+
+	root.append('path')
 		.datum(day.data)
 		.attr('class', 'line')
 		.attr('d', line);
-
-  svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
-
-  svg.append("g")
-      .attr("class", "y axis")
-      .call(yAxis)
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .text("Price ($)");
 }
 
 function main() {
@@ -183,6 +199,11 @@ function main() {
   fill: none;
   stroke: #000;
   shape-rendering: crispEdges;
+}
+
+.axis .tick line {
+    stroke: lightgrey;
+    opacity: 0.7;
 }
 
 .line {
