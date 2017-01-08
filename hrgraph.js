@@ -68,7 +68,7 @@ function parseFile(fn, cb) {
 }
 
 function help() {
-	console.log('Usage: hrgraph.js [OPTIONS] FILES..');
+	console.log('Usage: hrgraph.js [OPTIONS] FILE.tcx..');
 	console.log('  --output FILE.html  Write HTML file');
 	console.log('  --cache FILE.json   Write json cache file of all timestamps');
 	console.log('  --title TITLE       Document title');
