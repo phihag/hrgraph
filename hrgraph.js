@@ -73,6 +73,10 @@ function help() {
 	console.log('  --cache FILE.json   Write json cache file of all timestamps');
 	console.log('  --title TITLE       Document title');
 	console.log('  --smooth SECONDS    Only record values every x seconds');
+	console.log('  --start-time HH:MM  Start at specified time');
+	console.log('  --end-time HH:MM    End at specified time');
+	console.log('  --width WIDTH       Width of image in pixels');
+	console.log('  --height HEIGHT     Height of image in pixels');
 }
 
 function splitDays(datapoints) {
@@ -98,10 +102,8 @@ function splitDays(datapoints) {
 	return res;
 }
 
-function plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr) {
+function plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr, width, height) {
 	const margin = {top: 10, right: 10, bottom: 20, left: 50};
-	const width = 1200;
-	const height = 250;
 	const inner_width = width - margin.left - margin.right;
 	const inner_height = height - margin.top - margin.bottom;
 
@@ -175,12 +177,27 @@ function smooth(datapoints, secs) {
 	return res;
 }
 
+function _parse_time(timestr) {
+	const m = /^([0-9]{1,2}):([0-9]{1,2})(?::([0-9]{1,2}))?$/.exec(timestr);
+	if (!m) {
+		throw new Error('Invalid time ' + timestr);
+	}
+	return parseInt(m[1]) * 3600 + parseInt(m[2]) * 60 + (m[3] ? parseInt(m[3]) : 0);
+}
+
 function main() {
 	var argv = require('minimist')(process.argv.slice(2));
 	if (argv.help || !argv._.length) {
 		help();
 		return;
 	}
+
+	const start_time = argv['start-time'] ? _parse_time(argv['start-time'])  : null;
+	const end_time = argv['end-time'] ? _parse_time(argv['end-time']) : null;
+
+	const width = argv.width ? parseInt(argv.width) : 1200;
+	const height = argv.height ? parseInt(argv.height) : 250;
+
 	async.map(argv._, parseFile, function(err, dp_lists) {
 		if (err) throw err;
 		
@@ -196,6 +213,14 @@ function main() {
 			let dp_date = new Date(dp.timestamp);
 			dp.daysecond = dp_date.getHours() * 3600 + dp_date.getMinutes() * 60 + dp_date.getSeconds();
 		}
+
+		if (start_time) {
+			datapoints = datapoints.filter(dp => dp.daysecond >= start_time);
+		}
+		if (end_time) {
+			datapoints = datapoints.filter(dp => dp.daysecond <= end_time);
+		}
+
 		var min_daysecond = d3.min(datapoints, dp => dp.daysecond);
 		var max_daysecond = d3.max(datapoints, dp => dp.daysecond);
 		var min_hr = d3.min(datapoints, dp => dp.hr);
@@ -209,7 +234,6 @@ function main() {
 		}
 
 		var days = splitDays(datapoints);
-
 
 		var doc = jsdom.jsdom(`<!DOCTYPE html><html><head>
 <meta charset="utf-8" />
@@ -246,7 +270,7 @@ function main() {
 			body.append('h2').text(day_str);
 			let svg = body.append('svg');
 
-			plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr);
+			plot(day, svg, min_daysecond, max_daysecond, min_hr, max_hr, width, height);
 		}
 
 		var html = doc.documentElement.outerHTML;
